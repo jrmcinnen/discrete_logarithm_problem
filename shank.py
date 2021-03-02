@@ -1,41 +1,34 @@
+# author: Jere Mäkinen
+
 import math
 import time
 
 PRIMES = [331777, 16785407, 54018521, 214748357, 342999977, 788748341, 2147483647,
-          6547483043, 16148168401, 80630964769, 1171432692373]
+          6547483043, 16148168401, 80630964769]
 
-GENERATORS = [5, 5, 6, 2, 3, 2, 7, 2, 22, 17, 2]
+GENERATORS = [5, 5, 6, 2, 3, 2, 7, 2, 22, 17]
 
+# Maksimisuoritusaika ratkaisualgoritmeille.
+
+# Max time for algorithms to run.
 MAX_RUNNING_TIME = 7200
 
+# h yhtälöön h = p^x mod p
+
+# h for the equation h = p^x mod p
 H = 2021
 
-# Tarkistaa alkion (g)
+
+# Tarkistaa alkion (g) kertaluvun
 
 # Checks element's (g) order in set integers modulo p
-def checkOrder(p,g):
+def checkOrder(p, g):
     new_value = 1
     for i in range(1,p):
         new_value = (new_value * g) % p
         if new_value == 1:
             return i
     return 0
-
-
-def egcd(a, b):
-    if a == 0:
-        return (b, 0, 1)
-    else:
-        g, y, x = egcd(b % a, a)
-        return (g, x - (b // a) * y, y)
-
-
-def modinv(a, m):
-    g, x, y = egcd(a, m)
-    if g != 1:
-        raise Exception('modular inverse does not exist')
-    else:
-        return x % m
 
 
 # Etsii pienimmän mahdollisen virittäjän joukolle kokonaisluvut modulo p.
@@ -85,6 +78,9 @@ def solveDLP_shank(p, g, h):
                 return [-1, comparison_amount, MAX_RUNNING_TIME]
 
 
+# Suoraviivainen raa'an voiman menetelmä yhtälön h = p^x mod p ratkaisuun, missä p on alkuluku
+
+# Brute force method to solve equation h = p^x mod p, where p is a prime number.
 def solveDLP_bruteforce(p, g, h):
     start_time = time.time()
     solution = 0
