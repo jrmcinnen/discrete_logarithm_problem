@@ -3,10 +3,13 @@
 import math
 import time
 
-PRIMES = [331777, 16785407, 54018521, 214748357, 342999977, 788748341, 2147483647,
-          6547483043, 16148168401, 80630964769]
+TEST_PRIMES = [31]
+TEST_GENERATORS = [3]
 
-GENERATORS = [5, 5, 6, 2, 3, 2, 7, 2, 22, 17]
+PRIMES = [331777, 16785407, 54018521, 214748357, 342999977, 788748341, 988748323, 2147483647,
+          4347483557, 6547483043, 8547483037, 16148168401]
+
+GENERATORS = [5, 5, 6, 2, 3, 2, 3, 7, 5, 2, 2, 22]
 
 # Maksimisuoritusaika ratkaisualgoritmeille.
 
@@ -50,32 +53,37 @@ def findSmallestGenerator(p):
 # Shank's algorithm. Solves the equation h = p^x mod p, where p is a prime number.
 # Returns the solution x, the amount of made comparisons and the running time of the algorithm.
 def solveDLP_shank(p, g, h):
-    n = 1 + math.floor(math.sqrt(p-1))
     start_time = time.time()
-    u = pow(g, p-2, p)**n % p
-    l1 = []
-    l2 = []
-    l1.append(g**0)
-    l2.append(h)
+    n = 1 + math.floor(math.sqrt(p-1))
+    l1 = {1:  0}
     new_g = 1
-    new_u = u
+    u = pow(g, p - 2, p) ** n % p
     for i in range(1, n+1):
-        l1.append((g*new_g) % p)
         new_g = (g*new_g) % p
-        l2.append((h*new_u) % p)
-        new_u = (u*new_u) % p
-    comparison_amount = 0
-    for i in range(0, len(l1)):
-        for j in range(0, len(l2)):
-            comparison_amount += 1
-            if l1[i] == l2[j]:
-                print('Solution is ', i+j*n)
+        if not new_g in l1:
+            l1[new_g] = i
+    if h in l1:
+        solution = l1[h]
+        print("Solution is ", solution)
+        run_time = time.time() - start_time
+        print("--- %s seconds ---" % run_time)
+        return [solution, run_time]
+    else:
+        new_u = u
+        for i in range(1, n+1):
+            new_h = (h*new_u) % p
+            if new_h in l1:
+                solution = l1[new_h]+n*i
+                print("Solution is ", solution)
                 run_time = time.time() - start_time
                 print("--- %s seconds ---" % run_time)
-                return [int(i+j*n), comparison_amount,  run_time]
+                return [solution, run_time]
             if time.time() - start_time > MAX_RUNNING_TIME:
                 print('Solving took too much time')
-                return [-1, comparison_amount, MAX_RUNNING_TIME]
+                return [-1, MAX_RUNNING_TIME]
+            new_u = (u*new_u) % p
+    print("no result")
+
 
 
 # Suoraviivainen raa'an voiman menetelmä yhtälön h = p^x mod p ratkaisuun, missä p on alkuluku
@@ -85,20 +93,18 @@ def solveDLP_bruteforce(p, g, h):
     start_time = time.time()
     solution = 0
     new_g = 1
-    comparison_amount = 0
     for i in range(1, p):
-        comparison_amount += 1
         if g*new_g % p == h:
             solution = i
             break
         if time.time() - start_time > MAX_RUNNING_TIME:
             print('Solving took too much time')
-            return [-1, comparison_amount, MAX_RUNNING_TIME]
+            return [-1, MAX_RUNNING_TIME]
         new_g = g * new_g % p
     print('Solution is', solution)
     run_time = time.time() - start_time
     print("--- %s seconds ---" % run_time)
-    return [int(solution), comparison_amount, run_time]
+    return [int(solution), run_time]
 
 
 def give_primes():
@@ -113,6 +119,7 @@ def main():
     primes = primes_and_generators[0]
     generators = primes_and_generators[1]
     for i in range(0, len(primes)):
+        print("Let's solve the following equation: {} = {}^x mod {}".format(H, GENERATORS[i], PRIMES[i]))
         print("")
         print("Shank's algorithm:")
         solution_shank = solveDLP_shank(primes[i], generators[i], H)
@@ -121,22 +128,23 @@ def main():
         solution_bruteforce = solveDLP_bruteforce(primes[i], generators[i], H)
         start_time = time.time()
         print("")
-        if solution_shank[2] < MAX_RUNNING_TIME:
+        if solution_shank[1] < MAX_RUNNING_TIME:
             print('Check result (shank): ', pow(generators[i], solution_shank[0], primes[i]))
         else:
             print("Shank's algorithm ran out of time.")
 
-        if solution_bruteforce[2] < MAX_RUNNING_TIME:
+        if solution_bruteforce[1] < MAX_RUNNING_TIME:
             print('Check result (brute force): ', pow(generators[i], solution_bruteforce[0], primes[i]))
         else:
             print("Brute force run out of time.")
         check_time = time.time() - start_time
         print("--- %s seconds ---" % check_time)
-        file_shank.write(str(primes[i]) + ';' + str(solution_shank[0]) + ';' + str(solution_shank[1]) + ';' +
-                             str(solution_shank[2]) + '\n')
+        file_shank.write(str(primes[i]) + ';' + str(solution_shank[0]) + ';' + str(solution_shank[1]) +'\n')
         file_bruteforce.write(str(primes[i]) + ';' + str(solution_bruteforce[0]) + ';' +
-                              str(solution_bruteforce[1]) + ';' + str(solution_bruteforce[2]) + '\n')
-        file_check_result.write(str(primes[i]) + ';' + str(solution_shank[0]) + ';' + str(check_time))
+                              str(solution_bruteforce[1]) + '\n')
+        file_check_result.write(str(primes[i]) + ';' + str(solution_shank[0]) + ';' + str(check_time) + '\n')
+        print("")
+        print("")
     file_shank.close()
     file_bruteforce.close()
     file_check_result.close()
